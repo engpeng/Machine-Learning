@@ -1,0 +1,113 @@
+---
+title: "Machine Learning project"
+author: "Eng Peng"
+date: "Monday, March 23, 2015"
+output: html_document
+---
+
+#Course Project Assignment#
+
+"Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement ??? a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset)."
+
+#Objective#
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases. 1. Your submission should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-). 2. You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details.
+
+#Preparing and Reproducibility#
+
+Below is a list of relevant libraries needed to reproduce the same result -
+```{r}
+library(caret)
+library(randomForest)
+library(rpart)
+```
+To ensure reproducibility - pseudo random seed is used
+```{r}
+set.seed(2345)
+```
+
+**Loading dataset**
+
+```{r}
+trainUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+testUrl <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+train <- read.csv(url(trainUrl), na.strings=c("NA","#DIV/0!",""))
+test <- read.csv(url(testUrl), na.strings=c("NA","#DIV/0!",""))
+```
+
+**Partition training set**
+```{r}
+inTrain <- createDataPartition(y=train$classe, p=0.6, list=FALSE)
+myTrain <- train[inTrain, ]
+myTest <- train[-inTrain, ]
+```
+
+**Cleaning dataset**
+
+Check cloumn names
+```{r}
+all.equal(colnames(test)[1:length(colnames(test))-1], colnames(myTrain)[1:length(colnames(myTrain))-1])
+```
+
+Variables that contain more than half NA or missing values, NonZeroVariance and variables not needed for prediction are removed. Below are transformations used to clearn dataset up
+
+```{r}
+#remove variables with high number of NA and NonZeroVariance
+NZV<- nearZeroVar(myTrain, saveMetrics = TRUE)
+myTrain <- myTrain[, !NZV$nzv]
+
+#removing varaibles with more more than half are missing values
+remove <- sapply(colnames(myTrain), function(x) if(sum(is.na(myTrain[, x])) > 0.50*nrow(myTrain))    {return(TRUE)
+}else{
+return(FALSE)
+}
+)
+myTrain <- myTrain[, !remove]
+
+#remove variables not needed for prediction
+myTrain <- myTrain[, -(1:6)]
+```
+#Prediction model 1 - Decision Tree#
+```{r}
+model1 <- rpart(classe ~ ., data=myTrain, method="class")
+predict1 <- predict(model1, myTest, type = "class")
+confusionMatrix(predict1, myTest$classe)
+```
+
+#Prediction model 2- Random Forest#
+```{r}
+model2 <- randomForest(classe ~. , data=myTrain, method="class")
+predict2 <- predict(model2, myTest, type = "class")
+confusionMatrix(predict2, myTest$classe)
+```
+
+#Conclusion#
+As expected, Random Forest yields better result than Decision Tree as the former has a better accuracy. From R output:
+
+Expected Out of Sample error ~ 0.5%
+
+**Random Forest**
+Accuracy = 0.9929
+95% CI = [0.9907, 0.9946]
+
+**Decision Tree**
+Accuracy = 0.741
+95% CI = [0.7312, 0.7507]
+
+Therefore, using **Random Forest**,
+```{r}
+finalpredict <- predict(model2, test, type="class")
+```
+
+#Submit!#
+```{r}
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(finalpredict)
+```
