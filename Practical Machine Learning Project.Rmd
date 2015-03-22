@@ -1,6 +1,6 @@
 ---
-title: "Machine Learning project"
-author: "Eng Peng"
+title: "Practical Machine Learning Project"
+author: "Quek Eng Peng"
 date: "Monday, March 23, 2015"
 output: html_document
 ---
@@ -13,7 +13,17 @@ output: html_document
 
 The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases. 1. Your submission should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-). 2. You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details.
 
-#Preparing and Reproducibility#
+#Cross validation#
+
+**Cross-validation**
+
+Cross-validation will be performed by creating subsets of the training data set randomly without replacement into 2 subsets: mytrain data (60% of the original Training data set) and mytest data (40%). Our models will be fitted on the mytrain data set, and tested on the mytest data. Once the most accurate model is choosen, it will be tested on the original Testing data set.
+
+**Expected out-of-sample error**
+
+The expected out-of-sample error will correspond to the quantity: 1-accuracy in the cross-validation data. Accuracy is the proportion of correct classified observation over the total sample in the mytest data set. Expected accuracy is the expected accuracy in the out-of-sample data set (i.e. original testing data set). Thus, the expected value of the out-of-sample error will correspond to the expected number of missclassified observations/total observations in the Test data set, which is the quantity: 1-accuracy found from the cross-validation data set.
+
+#Preparing dataset and Reproducibility#
 
 Below is a list of relevant libraries needed to reproduce the same result -
 ```{r}
@@ -97,6 +107,7 @@ Accuracy = 0.741
 Therefore, using **Random Forest**,
 ```{r}
 finalpredict <- predict(model2, test, type="class")
+finalpredict
 ```
 
 #Submit!#
